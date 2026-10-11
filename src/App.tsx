@@ -27,10 +27,10 @@ export default function App() {
 
   useEffect(() => saveState(st), [st]);
 
-  // Läs upp texten en gång när den visas, och dölj den när uppläsningen är klar.
+  // Läs upp den nya meningen en gång när den visas, och dölj texten när uppläsningen är klar.
   useEffect(() => {
     if (st.phase !== "show") return;
-    const stop = speak(SECTIONS[st.sec].sentences.slice(0, st.n), {
+    const stop = speak([SECTIONS[st.sec].sentences[st.n - 1]], {
       onStart: () => setSpeech("speaking"),
       onEnd: () => dispatch({ type: "hide" }),
       onFail: () => setSpeech("blocked"),
