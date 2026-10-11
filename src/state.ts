@@ -1,6 +1,6 @@
 import { SECTIONS } from "./sections";
 
-export type Phase = "show" | "hidden" | "done";
+export type Phase = "show" | "hidden" | "check" | "done";
 
 export type State = {
   sec: number;
@@ -13,8 +13,9 @@ export type State = {
 export type Action =
   | { type: "go"; sec: number }
   | { type: "hide" }
+  | { type: "check" }
   | { type: "yes" }
-  | { type: "no" }
+  | { type: "retry" }
   | { type: "again" }
   | { type: "reset" };
 
@@ -54,12 +55,14 @@ export function reducer(st: State, action: Action): State {
       return go(st, action.sec);
     case "hide":
       return { ...st, phase: "hidden", started: addUnique(st.started, st.sec) };
+    case "check":
+      return { ...st, phase: "check" };
     case "yes": {
       const total = SECTIONS[st.sec].sentences.length;
       if (st.n >= total) return { ...st, phase: "done", done: addUnique(st.done, st.sec) };
       return { ...st, n: st.n + 1, phase: "show" };
     }
-    case "no":
+    case "retry":
       return { ...st, phase: "show" };
     case "again":
       return go({ ...st, done: st.done.filter((x) => x !== st.sec) }, st.sec);

@@ -60,6 +60,7 @@ h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0}
 .btn.yes{background:var(--good);border-color:var(--good);color:var(--surface)}
 .btn.no{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
 .btn kbd{font-family:var(--f-mono);font-size:11px;opacity:.75;margin-left:6px}
+.status{align-self:center;font-family:var(--f-mono);font-size:13px;color:var(--muted)}
 .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .link{background:none;border:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}

@@ -1,5 +1,6 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { SECTIONS } from "./sections";
+import { speak } from "./speech";
 import { loadState, nextSection, reducer, saveState } from "./state";
 
 // Gör om `backticks` till <code>.
@@ -18,8 +19,24 @@ export default function App() {
   const isDone = st.phase === "done";
   const shown = isDone ? total : st.n;
   const next = nextSection(st);
+  const [speech, setSpeech] = useState<"waiting" | "speaking" | "blocked">("waiting");
+  const [playToken, setPlayToken] = useState(0);
 
   useEffect(() => saveState(st), [st]);
+
+  // Läs upp texten en gång när den visas, och dölj den när uppläsningen är klar.
+  useEffect(() => {
+    if (st.phase !== "show") return;
+    const stop = speak(SECTIONS[st.sec].sentences.slice(0, st.n), {
+      onStart: () => setSpeech("speaking"),
+      onEnd: () => dispatch({ type: "hide" }),
+      onFail: () => setSpeech("blocked"),
+    });
+    return () => {
+      stop();
+      setSpeech("waiting");
+    };
+  }, [st.phase, st.sec, st.n, playToken]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -27,16 +44,19 @@ export default function App() {
       if (target?.closest?.("button") && (e.key === " " || e.key === "Enter")) return;
       if (e.key === " ") {
         e.preventDefault();
-        if (st.phase === "show") dispatch({ type: "hide" });
-        else if (st.phase === "hidden") dispatch({ type: "yes" });
+        if (st.phase === "show") {
+          if (speech === "blocked") setPlayToken((t) => t + 1);
+          else dispatch({ type: "hide" });
+        } else if (st.phase === "hidden") dispatch({ type: "check" });
+        else if (st.phase === "check") dispatch({ type: "retry" });
         else if (next > -1) dispatch({ type: "go", sec: next });
-      } else if ((e.key === "n" || e.key === "N") && st.phase === "hidden") {
-        dispatch({ type: "no" });
+      } else if ((e.key === "k" || e.key === "K") && st.phase === "check") {
+        dispatch({ type: "yes" });
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [st.phase, next]);
+  }, [st.phase, next, speech]);
 
   return (
     <div className="wrap">
@@ -44,7 +64,7 @@ export default function App() {
         <span className="eyebrow">Kubernetes · Block 1 · prov onsdag</span>
         <h1>Lär dig mening för mening</h1>
         <p className="intro">
-          Läs, dölj och repetera i huvudet. Klarar du det läggs nästa mening till. Klarar du det inte får du läsa igen.
+          Lyssna, repetera i huvudet och kontrollera. Klarar du det läggs nästa mening till. Annars läses texten upp igen.
         </p>
       </header>
 
@@ -78,7 +98,7 @@ export default function App() {
         </div>
 
         <div className="stage">
-          {st.phase === "show" && (
+          {(st.phase === "show" || st.phase === "check") && (
             <p className="text">
               {S.sentences.slice(0, shown).map((x, i) => (
                 <span key={i}>
@@ -104,18 +124,36 @@ export default function App() {
         </div>
 
         <div className="actions">
-          {st.phase === "show" && (
-            <button type="button" className="btn primary" onClick={() => dispatch({ type: "hide" })}>
-              Dölj och repetera<kbd>␣</kbd>
+          {st.phase === "show" &&
+            (speech === "blocked" ? (
+              <>
+                <button type="button" className="btn primary" onClick={() => setPlayToken((t) => t + 1)}>
+                  Läs upp<kbd>␣</kbd>
+                </button>
+                <button type="button" className="btn" onClick={() => dispatch({ type: "hide" })}>
+                  Dölj utan uppläsning
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="status">{speech === "speaking" ? "Läser upp…" : "Startar uppläsning…"}</span>
+                <button type="button" className="btn" onClick={() => dispatch({ type: "hide" })}>
+                  Dölj nu<kbd>␣</kbd>
+                </button>
+              </>
+            ))}
+          {st.phase === "hidden" && (
+            <button type="button" className="btn primary" onClick={() => dispatch({ type: "check" })}>
+              Kontrollera svar<kbd>␣</kbd>
             </button>
           )}
-          {st.phase === "hidden" && (
+          {st.phase === "check" && (
             <>
               <button type="button" className="btn yes" onClick={() => dispatch({ type: "yes" })}>
-                Klarade det<kbd>␣</kbd>
+                Klarade det<kbd>K</kbd>
               </button>
-              <button type="button" className="btn no" onClick={() => dispatch({ type: "no" })}>
-                Klarade inte<kbd>N</kbd>
+              <button type="button" className="btn no" onClick={() => dispatch({ type: "retry" })}>
+                Försök igen<kbd>␣</kbd>
               </button>
             </>
           )}
@@ -140,7 +178,7 @@ export default function App() {
       </section>
 
       <div className="foot">
-        <span>Mellanslag = dölj / ja · N = nej</span>
+        <span>Mellanslag = kontrollera / försök igen · K = klarade</span>
         <button className="link" type="button" onClick={() => dispatch({ type: "reset" })}>
           Börja om allt
         </button>
