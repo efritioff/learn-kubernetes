@@ -62,8 +62,17 @@ export default function App() {
   const voice = VOICES.find((v) => v.id === settings.voice)?.id ?? VOICES[0]?.id;
   const stopAuto = useRef<(() => void) | null>(null);
   const stopClick = useRef<(() => void) | null>(null);
+  const chipsRef = useRef<HTMLElement>(null);
 
   useEffect(() => saveState(st), [st]);
+
+  // På mobil scrollar rubrikerna i sidled: håll den valda i bild.
+  useEffect(() => {
+    const nav = chipsRef.current;
+    const chip = nav?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!nav || !chip || nav.scrollWidth <= nav.clientWidth) return;
+    nav.scrollTo({ left: chip.offsetLeft - (nav.clientWidth - chip.offsetWidth) / 2, behavior: "smooth" });
+  }, [st.sec]);
 
   // Läs upp den nya meningen en gång när den visas, och dölj texten när uppläsningen är klar.
   useEffect(() => {
@@ -113,7 +122,7 @@ export default function App() {
         } else if (st.phase === "hidden") dispatch({ type: "check" });
         else if (st.phase === "check") dispatch({ type: "retry" });
         else if (next > -1) dispatch({ type: "go", sec: next });
-      } else if ((e.key === "k" || e.key === "K") && st.phase === "check") {
+      } else if ((e.key === "k" || e.key === "K") && st.phase !== "done") {
         dispatch({ type: "yes" });
       }
     }
@@ -162,7 +171,7 @@ export default function App() {
         </p>
       </header>
 
-      <nav className="chips" aria-label="Rubriker">
+      <nav className="chips" aria-label="Rubriker" ref={chipsRef}>
         {SECTIONS.map((x, i) => {
           const cls = st.done.includes(i) ? "done" : st.started.includes(i) ? "started" : "";
           return (
@@ -230,22 +239,9 @@ export default function App() {
         </div>
 
         <div className="actions">
-          {st.phase === "show" &&
-            (!autoRead ? (
-              <button type="button" className="btn primary" onClick={() => dispatch({ type: "hide" })}>
-                Dölj och repetera<kbd>␣</kbd>
-              </button>
-            ) : speech === "blocked" ? (
-              <>
-                <button type="button" className="btn primary" onClick={() => setPlayToken((t) => t + 1)}>
-                  Läs upp<kbd>␣</kbd>
-                </button>
-                <button type="button" className="btn" onClick={() => dispatch({ type: "hide" })}>
-                  Dölj utan uppläsning
-                </button>
-              </>
-            ) : (
-              <>
+          {st.phase === "show" && (
+            <>
+              {autoRead && speech !== "blocked" && (
                 <span className="status">
                   {speech === "speaking"
                     ? "Läser upp…"
@@ -253,15 +249,43 @@ export default function App() {
                       ? "Tryck på en mening för att höra den"
                       : "Startar uppläsning…"}
                 </span>
-                <button type="button" className="btn" onClick={() => dispatch({ type: "hide" })}>
-                  Dölj nu<kbd>␣</kbd>
+              )}
+              {autoRead && speech === "blocked" && (
+                <button type="button" className="btn primary" onClick={() => setPlayToken((t) => t + 1)}>
+                  Läs upp<kbd>␣</kbd>
                 </button>
-              </>
-            ))}
+              )}
+              <button
+                type="button"
+                className={`btn ${autoRead ? "" : "primary"}`}
+                onClick={() => dispatch({ type: "hide" })}
+              >
+                {!autoRead ? (
+                  <>
+                    Dölj och repetera<kbd>␣</kbd>
+                  </>
+                ) : speech === "blocked" ? (
+                  "Dölj utan uppläsning"
+                ) : (
+                  <>
+                    Dölj nu<kbd>␣</kbd>
+                  </>
+                )}
+              </button>
+              <button type="button" className="btn ok" onClick={() => dispatch({ type: "yes" })}>
+                Jag kan den<kbd>K</kbd>
+              </button>
+            </>
+          )}
           {st.phase === "hidden" && (
-            <button type="button" className="btn primary" onClick={() => dispatch({ type: "check" })}>
-              Kontrollera svar<kbd>␣</kbd>
-            </button>
+            <>
+              <button type="button" className="btn primary" onClick={() => dispatch({ type: "check" })}>
+                Kontrollera svar<kbd>␣</kbd>
+              </button>
+              <button type="button" className="btn ok" onClick={() => dispatch({ type: "yes" })}>
+                Klarade det<kbd>K</kbd>
+              </button>
+            </>
           )}
           {st.phase === "check" && (
             <>
@@ -294,8 +318,14 @@ export default function App() {
       </section>
 
       <div className="foot">
-        <span>Mellanslag = kontrollera / försök igen · K = klarade</span>
-        <button className="link" type="button" onClick={() => dispatch({ type: "reset" })}>
+        <span className="kbd-hint">Mellanslag = dölj / kontrollera / försök igen · K = klarade</span>
+        <button
+          className="btn small"
+          type="button"
+          onClick={() => {
+            if (window.confirm("Börja om allt? Alla framsteg nollställs.")) dispatch({ type: "reset" });
+          }}
+        >
           Börja om allt
         </button>
       </div>

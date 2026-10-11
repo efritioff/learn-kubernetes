@@ -83,8 +83,41 @@ h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .btn.yes{background:var(--good);border-color:var(--good);color:var(--surface)}
 .btn.no{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.btn.ok{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.btn.small{font-size:14px;padding:8px 14px;color:var(--muted)}
+.btn.small:hover{color:var(--fg);border-color:var(--muted)}
 .btn kbd{font-family:var(--f-mono);font-size:11px;opacity:.75;margin-left:6px}
 .status{align-self:center;font-family:var(--f-mono);font-size:13px;color:var(--muted)}
-.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .link{background:none;border:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+.text .s{-webkit-tap-highlight-color:transparent}
+
+/* Pekskärm: inga tangentbordstips */
+@media (hover: none) and (pointer: coarse){
+  .btn kbd,.kbd-hint{display:none}
+}
+
+/* Mobil */
+@media (max-width: 600px){
+  body{padding-block:16px 32px}
+  .wrap{gap:16px}
+  .topbar{flex-direction:column;align-items:stretch;gap:10px}
+  .switches{flex-wrap:nowrap;gap:6px}
+  .seg{flex:1;min-width:0}
+  .seg button{flex:1;padding:7px 8px}
+  .switch{padding:5px 6px 5px 10px;gap:7px}
+  .switch .label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding-inline:16px;padding-block:2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none}
+  .card{padding:16px;gap:14px;border-radius:12px}
+  .stage{min-height:180px}
+  .black,.doneBox{padding:20px}
+  .actions{gap:8px}
+  .actions .btn{flex:1 1 auto;text-align:center;padding-inline:12px}
+  .status{flex-basis:100%;text-align:center}
+  .foot{justify-content:center}
+}
+
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}

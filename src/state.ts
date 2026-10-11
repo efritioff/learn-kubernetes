@@ -59,8 +59,9 @@ export function reducer(st: State, action: Action): State {
       return { ...st, phase: "check" };
     case "yes": {
       const total = SECTIONS[st.sec].sentences.length;
-      if (st.n >= total) return { ...st, phase: "done", done: addUnique(st.done, st.sec) };
-      return { ...st, n: st.n + 1, phase: "show" };
+      const started = addUnique(st.started, st.sec);
+      if (st.n >= total) return { ...st, started, phase: "done", done: addUnique(st.done, st.sec) };
+      return { ...st, started, n: st.n + 1, phase: "show" };
     }
     case "retry":
       return { ...st, phase: "show" };
