@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { SECTIONS } from "./sections";
 import { speak } from "./speech";
 import { loadState, nextSection, reducer, saveState } from "./state";
@@ -19,8 +19,11 @@ export default function App() {
   const isDone = st.phase === "done";
   const shown = isDone ? total : st.n;
   const next = nextSection(st);
-  const [speech, setSpeech] = useState<"waiting" | "speaking" | "blocked">("waiting");
+  const [speech, setSpeech] = useState<"waiting" | "speaking" | "blocked" | "stopped">("waiting");
   const [playToken, setPlayToken] = useState(0);
+  const [playing, setPlaying] = useState<number | null>(null);
+  const stopAuto = useRef<(() => void) | null>(null);
+  const stopClick = useRef<(() => void) | null>(null);
 
   useEffect(() => saveState(st), [st]);
 
@@ -32,16 +35,39 @@ export default function App() {
       onEnd: () => dispatch({ type: "hide" }),
       onFail: () => setSpeech("blocked"),
     });
+    stopAuto.current = stop;
     return () => {
       stop();
       setSpeech("waiting");
     };
   }, [st.phase, st.sec, st.n, playToken]);
 
+  // Avbryt en klickad mening när man byter läge eller mening.
+  useEffect(
+    () => () => {
+      stopClick.current?.();
+      setPlaying(null);
+    },
+    [st.phase, st.sec, st.n, playToken],
+  );
+
+  // Spela upp en enda mening och markera den. Avbryter den automatiska uppläsningen.
+  function playSentence(i: number) {
+    stopAuto.current?.();
+    stopClick.current?.();
+    if (st.phase === "show") setSpeech("stopped");
+    setPlaying(i);
+    stopClick.current = speak([S.sentences[i]], {
+      onStart: () => {},
+      onEnd: () => setPlaying(null),
+      onFail: () => setPlaying(null),
+    });
+  }
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const target = e.target as Element | null;
-      if (target?.closest?.("button") && (e.key === " " || e.key === "Enter")) return;
+      if (target?.closest?.("button, [role=button]") && (e.key === " " || e.key === "Enter")) return;
       if (e.key === " ") {
         e.preventDefault();
         if (st.phase === "show") {
@@ -102,7 +128,19 @@ export default function App() {
             <p className="text">
               {S.sentences.slice(0, shown).map((x, i) => (
                 <span key={i}>
-                  <span className={`s ${i === shown - 1 && shown > 1 ? "newest" : ""}`}>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    title="Spela upp meningen"
+                    className={`s ${i === playing ? "playing" : i === shown - 1 && shown > 1 ? "newest" : ""}`}
+                    onClick={() => playSentence(i)}
+                    onKeyDown={(e) => {
+                      if (e.key === " " || e.key === "Enter") {
+                        e.preventDefault();
+                        playSentence(i);
+                      }
+                    }}
+                  >
                     <Sentence text={x} />
                   </span>{" "}
                 </span>
@@ -136,7 +174,13 @@ export default function App() {
               </>
             ) : (
               <>
-                <span className="status">{speech === "speaking" ? "Läser upp…" : "Startar uppläsning…"}</span>
+                <span className="status">
+                  {speech === "speaking"
+                    ? "Läser upp…"
+                    : speech === "stopped"
+                      ? "Tryck på en mening för att höra den"
+                      : "Startar uppläsning…"}
+                </span>
                 <button type="button" className="btn" onClick={() => dispatch({ type: "hide" })}>
                   Dölj nu<kbd>␣</kbd>
                 </button>
