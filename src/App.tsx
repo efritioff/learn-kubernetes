@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { SECTIONS } from "./sections";
+import { useSettings } from "./settings";
 import { speak } from "./speech";
 import { loadState, nextSection, reducer, saveState } from "./state";
 
@@ -12,6 +13,15 @@ function Sentence({ text }: { text: string }) {
   );
 }
 
+function Switch({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={checked} className="switch" onClick={() => onChange(!checked)}>
+      <span className="track" />
+      {label}
+    </button>
+  );
+}
+
 export default function App() {
   const [st, dispatch] = useReducer(reducer, undefined, loadState);
   const S = SECTIONS[st.sec];
@@ -21,7 +31,9 @@ export default function App() {
   const next = nextSection(st);
   const [speech, setSpeech] = useState<"waiting" | "speaking" | "blocked" | "stopped">("waiting");
   const [playToken, setPlayToken] = useState(0);
-  const [playing, setPlaying] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [settings, updateSettings] = useSettings();
+  const tts = settings.tts;
   const stopAuto = useRef<(() => void) | null>(null);
   const stopClick = useRef<(() => void) | null>(null);
 
@@ -29,7 +41,7 @@ export default function App() {
 
   // Läs upp den nya meningen en gång när den visas, och dölj texten när uppläsningen är klar.
   useEffect(() => {
-    if (st.phase !== "show") return;
+    if (st.phase !== "show" || !tts) return;
     const stop = speak([SECTIONS[st.sec].sentences[st.n - 1]], {
       onStart: () => setSpeech("speaking"),
       onEnd: () => dispatch({ type: "hide" }),
@@ -40,29 +52,33 @@ export default function App() {
       stop();
       setSpeech("waiting");
     };
-  }, [st.phase, st.sec, st.n, playToken]);
+  }, [st.phase, st.sec, st.n, playToken, tts]);
 
-  // Avbryt en klickad mening när man byter läge eller mening.
+  // Avbryt en klickad mening och ta bort markeringen när man byter läge eller mening.
   useEffect(
     () => () => {
       stopClick.current?.();
-      setPlaying(null);
+      setSelected(null);
     },
     [st.phase, st.sec, st.n, playToken],
   );
 
-  // Spela upp en enda mening och markera den. Avbryter den automatiska uppläsningen.
-  function playSentence(i: number) {
+  useEffect(() => {
+    if (!tts) stopClick.current?.();
+  }, [tts]);
+
+  // Markera en mening och spela upp den. Avbryter den automatiska uppläsningen.
+  function selectSentence(i: number) {
+    setSelected(i);
+    if (!tts) return;
     stopAuto.current?.();
     stopClick.current?.();
     if (st.phase === "show") setSpeech("stopped");
-    setPlaying(i);
-    stopClick.current = speak([S.sentences[i]], {
-      onStart: () => {},
-      onEnd: () => setPlaying(null),
-      onFail: () => setPlaying(null),
-    });
+    stopClick.current = speak([S.sentences[i]], { onStart: () => {}, onEnd: () => {}, onFail: () => {} });
   }
+
+  // Den klickade meningen är markerad, annars den nya.
+  const highlighted = selected ?? (shown > 1 ? shown - 1 : null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -71,7 +87,7 @@ export default function App() {
       if (e.key === " ") {
         e.preventDefault();
         if (st.phase === "show") {
-          if (speech === "blocked") setPlayToken((t) => t + 1);
+          if (tts && speech === "blocked") setPlayToken((t) => t + 1);
           else dispatch({ type: "hide" });
         } else if (st.phase === "hidden") dispatch({ type: "check" });
         else if (st.phase === "check") dispatch({ type: "retry" });
@@ -82,12 +98,22 @@ export default function App() {
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [st.phase, next, speech]);
+  }, [st.phase, next, speech, tts]);
 
   return (
     <div className="wrap">
       <header>
-        <span className="eyebrow">Kubernetes · Block 1 · prov onsdag</span>
+        <div className="topbar">
+          <span className="eyebrow">Kubernetes · Block 1 · prov onsdag</span>
+          <div className="switches">
+            <Switch label="Uppläsning" checked={tts} onChange={(v) => updateSettings({ tts: v })} />
+            <Switch
+              label="Mörkt läge"
+              checked={settings.theme === "dark"}
+              onChange={(v) => updateSettings({ theme: v ? "dark" : "light" })}
+            />
+          </div>
+        </div>
         <h1>Lär dig mening för mening</h1>
         <p className="intro">
           Lyssna, repetera i huvudet och kontrollera. Klarar du det läggs nästa mening till. Annars läses texten upp igen.
@@ -131,13 +157,13 @@ export default function App() {
                   <span
                     role="button"
                     tabIndex={0}
-                    title="Spela upp meningen"
-                    className={`s ${i === playing ? "playing" : i === shown - 1 && shown > 1 ? "newest" : ""}`}
-                    onClick={() => playSentence(i)}
+                    title={tts ? "Spela upp meningen" : "Markera meningen"}
+                    className={`s ${i === highlighted ? "newest" : ""}`}
+                    onClick={() => selectSentence(i)}
                     onKeyDown={(e) => {
                       if (e.key === " " || e.key === "Enter") {
                         e.preventDefault();
-                        playSentence(i);
+                        selectSentence(i);
                       }
                     }}
                   >
@@ -163,7 +189,11 @@ export default function App() {
 
         <div className="actions">
           {st.phase === "show" &&
-            (speech === "blocked" ? (
+            (!tts ? (
+              <button type="button" className="btn primary" onClick={() => dispatch({ type: "hide" })}>
+                Dölj och repetera<kbd>␣</kbd>
+              </button>
+            ) : speech === "blocked" ? (
               <>
                 <button type="button" className="btn primary" onClick={() => setPlayToken((t) => t + 1)}>
                   Läs upp<kbd>␣</kbd>
