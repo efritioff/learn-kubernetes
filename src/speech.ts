@@ -6,14 +6,18 @@ type Callbacks = {
   onFail: () => void;
 };
 
-const audioFiles: Record<string, string> = manifest;
+type Manifest = { voices: { id: string; name: string }[]; files: Record<string, Record<string, string>> };
+const { voices, files: audioFiles }: Manifest = manifest;
+
+export const VOICES = voices;
 const plain = (text: string) => text.replaceAll("`", "");
 
 // Läser upp meningarna i ordning och anropar onEnd efter den sista.
 // Använder förinspelade filer (npm run tts) om alla finns, annars webbläsarens röst.
 // Returnerar en funktion som avbryter uppläsningen utan att anropa några callbacks.
-export function speak(sentences: string[], cb: Callbacks): () => void {
-  const files = sentences.map((s) => audioFiles[plain(s)]);
+export function speak(sentences: string[], voice: string | undefined, cb: Callbacks): () => void {
+  const voiceFiles = (voice && audioFiles[voice]) || {};
+  const files = sentences.map((s) => voiceFiles[plain(s)]);
   if (files.length > 0 && files.every(Boolean)) return playFiles(files, cb);
   return speakSynth(sentences, cb);
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
-export type Settings = { theme: Theme; autoRead: boolean };
+export type Settings = { theme: Theme; autoRead: boolean; voice?: string };
 
 const KEY = "k8s-settings-v2";
 

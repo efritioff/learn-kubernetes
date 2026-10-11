@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { SECTIONS } from "./sections";
 import { useSettings } from "./settings";
-import { speak } from "./speech";
+import { speak, VOICES } from "./speech";
 import { loadState, nextSection, reducer, saveState } from "./state";
 
 // Gör om `backticks` till <code>.
@@ -59,6 +59,7 @@ export default function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [settings, updateSettings] = useSettings();
   const autoRead = settings.autoRead;
+  const voice = VOICES.find((v) => v.id === settings.voice)?.id ?? VOICES[0]?.id;
   const stopAuto = useRef<(() => void) | null>(null);
   const stopClick = useRef<(() => void) | null>(null);
 
@@ -67,7 +68,7 @@ export default function App() {
   // Läs upp den nya meningen en gång när den visas, och dölj texten när uppläsningen är klar.
   useEffect(() => {
     if (st.phase !== "show" || !autoRead) return;
-    const stop = speak([SECTIONS[st.sec].sentences[st.n - 1]], {
+    const stop = speak([SECTIONS[st.sec].sentences[st.n - 1]], voice, {
       onStart: () => setSpeech("speaking"),
       onEnd: () => dispatch({ type: "hide" }),
       onFail: () => setSpeech("blocked"),
@@ -77,7 +78,7 @@ export default function App() {
       stop();
       setSpeech("waiting");
     };
-  }, [st.phase, st.sec, st.n, playToken, autoRead]);
+  }, [st.phase, st.sec, st.n, playToken, autoRead, voice]);
 
   // Avbryt en klickad mening och ta bort markeringen när man byter läge eller mening.
   useEffect(
@@ -94,7 +95,7 @@ export default function App() {
     stopAuto.current?.();
     stopClick.current?.();
     if (st.phase === "show") setSpeech("stopped");
-    stopClick.current = speak([S.sentences[i]], { onStart: () => {}, onEnd: () => {}, onFail: () => {} });
+    stopClick.current = speak([S.sentences[i]], voice, { onStart: () => {}, onEnd: () => {}, onFail: () => {} });
   }
 
   // Den klickade meningen är markerad, annars den nya.
@@ -126,6 +127,21 @@ export default function App() {
         <div className="topbar">
           <span className="eyebrow">Kubernetes · Block 1 · prov onsdag</span>
           <div className="switches">
+            {VOICES.length > 1 && (
+              <div className="seg" role="radiogroup" aria-label="Röst">
+                {VOICES.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={v.id === voice}
+                    onClick={() => updateSettings({ voice: v.id })}
+                  >
+                    {v.name}
+                  </button>
+                ))}
+              </div>
+            )}
             <Switch
               label="Läs upp automatiskt"
               icon="speaker"

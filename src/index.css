@@ -41,6 +41,12 @@ h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,6vw,40px);l
 .switch[aria-checked="true"] .icon{color:var(--accent)}
 .switch[aria-checked="true"] .track{background:var(--accent)}
 .switch[aria-checked="true"] .knob{transform:translateX(14px)}
+.seg{display:inline-flex;padding:3px;gap:2px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.seg button{border:none;background:none;cursor:pointer;padding:6px 12px;border-radius:999px;
+  font-family:var(--f-display);font-weight:500;font-size:13px;color:var(--muted);transition:background .2s,color .2s}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-checked="true"]{background:var(--accent);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .switch:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .chips{display:flex;flex-wrap:wrap;gap:8px}
