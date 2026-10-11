@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
-export type Settings = { theme: Theme; tts: boolean };
+export type Settings = { theme: Theme; autoRead: boolean };
 
-const KEY = "k8s-settings-v1";
+const KEY = "k8s-settings-v2";
 
 function load(): Settings {
   const systemDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-  const fallback: Settings = { theme: systemDark ? "dark" : "light", tts: true };
+  const fallback: Settings = { theme: systemDark ? "dark" : "light", autoRead: true };
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? "null");
     if (saved && typeof saved === "object") return { ...fallback, ...saved };

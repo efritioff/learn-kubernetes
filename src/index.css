@@ -28,16 +28,20 @@ h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,6vw,40px);l
 .intro{font-size:15px;color:var(--muted);margin:0;max-width:62ch;line-height:1.5}
 
 .topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 16px}
-.switches{display:flex;flex-wrap:wrap;gap:6px 16px}
-.switch{display:inline-flex;align-items:center;gap:8px;background:none;border:none;padding:4px 0;cursor:pointer;
-  font-family:var(--f-mono);font-size:12px;color:var(--muted)}
-.switch .track{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:background .2s;flex:none}
-.switch .track::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
-  background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
-.switch[aria-checked="true"]{color:var(--fg)}
+.switches{display:flex;flex-wrap:wrap;gap:8px}
+.switch{display:inline-flex;align-items:center;gap:9px;padding:6px 7px 6px 12px;border-radius:999px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--line);color:var(--muted);
+  font-family:var(--f-display);font-weight:500;font-size:13px;transition:border-color .2s,color .2s,background .2s}
+.switch:hover{border-color:var(--muted)}
+.switch .icon{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.switch .track{width:36px;height:22px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .25s}
+.switch .knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.switch[aria-checked="true"]{color:var(--fg);background:var(--accent-soft);border-color:transparent}
+.switch[aria-checked="true"] .icon{color:var(--accent)}
 .switch[aria-checked="true"] .track{background:var(--accent)}
-.switch[aria-checked="true"] .track::after{transform:translateX(14px)}
-.switch:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.switch[aria-checked="true"] .knob{transform:translateX(14px)}
+.switch:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{font-family:var(--f-display);font-weight:500;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);

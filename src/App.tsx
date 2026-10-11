@@ -13,11 +13,36 @@ function Sentence({ text }: { text: string }) {
   );
 }
 
-function Switch({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+const ICONS = {
+  speaker: (
+    <path d="M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7m2.8-10.3a9 9 0 0 1 0 13.6" />
+  ),
+  moon: <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" />,
+  sun: (
+    <path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-14v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+  ),
+};
+
+function Switch({
+  label,
+  icon,
+  checked,
+  onChange,
+}: {
+  label: string;
+  icon: keyof typeof ICONS;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <button type="button" role="switch" aria-checked={checked} className="switch" onClick={() => onChange(!checked)}>
-      <span className="track" />
-      {label}
+      <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+        {ICONS[icon]}
+      </svg>
+      <span className="label">{label}</span>
+      <span className="track">
+        <span className="knob" />
+      </span>
     </button>
   );
 }
@@ -33,7 +58,7 @@ export default function App() {
   const [playToken, setPlayToken] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [settings, updateSettings] = useSettings();
-  const tts = settings.tts;
+  const autoRead = settings.autoRead;
   const stopAuto = useRef<(() => void) | null>(null);
   const stopClick = useRef<(() => void) | null>(null);
 
@@ -41,7 +66,7 @@ export default function App() {
 
   // Läs upp den nya meningen en gång när den visas, och dölj texten när uppläsningen är klar.
   useEffect(() => {
-    if (st.phase !== "show" || !tts) return;
+    if (st.phase !== "show" || !autoRead) return;
     const stop = speak([SECTIONS[st.sec].sentences[st.n - 1]], {
       onStart: () => setSpeech("speaking"),
       onEnd: () => dispatch({ type: "hide" }),
@@ -52,7 +77,7 @@ export default function App() {
       stop();
       setSpeech("waiting");
     };
-  }, [st.phase, st.sec, st.n, playToken, tts]);
+  }, [st.phase, st.sec, st.n, playToken, autoRead]);
 
   // Avbryt en klickad mening och ta bort markeringen när man byter läge eller mening.
   useEffect(
@@ -63,14 +88,9 @@ export default function App() {
     [st.phase, st.sec, st.n, playToken],
   );
 
-  useEffect(() => {
-    if (!tts) stopClick.current?.();
-  }, [tts]);
-
   // Markera en mening och spela upp den. Avbryter den automatiska uppläsningen.
   function selectSentence(i: number) {
     setSelected(i);
-    if (!tts) return;
     stopAuto.current?.();
     stopClick.current?.();
     if (st.phase === "show") setSpeech("stopped");
@@ -87,7 +107,7 @@ export default function App() {
       if (e.key === " ") {
         e.preventDefault();
         if (st.phase === "show") {
-          if (tts && speech === "blocked") setPlayToken((t) => t + 1);
+          if (autoRead && speech === "blocked") setPlayToken((t) => t + 1);
           else dispatch({ type: "hide" });
         } else if (st.phase === "hidden") dispatch({ type: "check" });
         else if (st.phase === "check") dispatch({ type: "retry" });
@@ -98,7 +118,7 @@ export default function App() {
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [st.phase, next, speech, tts]);
+  }, [st.phase, next, speech, autoRead]);
 
   return (
     <div className="wrap">
@@ -106,9 +126,15 @@ export default function App() {
         <div className="topbar">
           <span className="eyebrow">Kubernetes · Block 1 · prov onsdag</span>
           <div className="switches">
-            <Switch label="Uppläsning" checked={tts} onChange={(v) => updateSettings({ tts: v })} />
+            <Switch
+              label="Läs upp automatiskt"
+              icon="speaker"
+              checked={autoRead}
+              onChange={(v) => updateSettings({ autoRead: v })}
+            />
             <Switch
               label="Mörkt läge"
+              icon={settings.theme === "dark" ? "moon" : "sun"}
               checked={settings.theme === "dark"}
               onChange={(v) => updateSettings({ theme: v ? "dark" : "light" })}
             />
@@ -157,7 +183,7 @@ export default function App() {
                   <span
                     role="button"
                     tabIndex={0}
-                    title={tts ? "Spela upp meningen" : "Markera meningen"}
+                    title="Spela upp meningen"
                     className={`s ${i === highlighted ? "newest" : ""}`}
                     onClick={() => selectSentence(i)}
                     onKeyDown={(e) => {
@@ -189,7 +215,7 @@ export default function App() {
 
         <div className="actions">
           {st.phase === "show" &&
-            (!tts ? (
+            (!autoRead ? (
               <button type="button" className="btn primary" onClick={() => dispatch({ type: "hide" })}>
                 Dölj och repetera<kbd>␣</kbd>
               </button>
