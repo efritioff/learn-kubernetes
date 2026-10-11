@@ -61,6 +61,14 @@ h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,6vw,40px);l
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:18px;min-width:0}
 .cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
 h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0}
+.nav{display:flex;align-items:center;gap:10px}
+.iconbtn{width:34px;height:34px;flex:none;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer;
+  border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:border-color .2s,background .2s}
+.iconbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn:hover:not(:disabled){border-color:var(--muted);background:var(--accent-soft)}
+.iconbtn:disabled{opacity:.35;cursor:default}
+.iconbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .count{font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
 .bar span{display:block;height:100%;background:var(--accent);transition:width .3s}
@@ -111,6 +119,7 @@ h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0}
   .chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding-inline:16px;padding-block:2px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:none}
+  .cardhead{align-items:center}
   .card{padding:16px;gap:14px;border-radius:12px}
   .stage{min-height:180px}
   .black,.doneBox{padding:20px}

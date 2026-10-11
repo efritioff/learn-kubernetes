@@ -122,6 +122,8 @@ export default function App() {
         } else if (st.phase === "hidden") dispatch({ type: "check" });
         else if (st.phase === "check") dispatch({ type: "retry" });
         else if (next > -1) dispatch({ type: "go", sec: next });
+      } else if (e.key === "ArrowLeft") {
+        dispatch({ type: "back" });
       } else if ((e.key === "k" || e.key === "K") && st.phase !== "done") {
         dispatch({ type: "yes" });
       }
@@ -192,9 +194,23 @@ export default function App() {
       <section className="card" aria-live="polite">
         <div className="cardhead">
           <h2>{S.title}</h2>
-          <span className="count">
-            {isDone ? `${total} av ${total} meningar` : `Mening ${st.n} av ${total}`}
-          </span>
+          <div className="nav">
+            <button
+              type="button"
+              className="iconbtn"
+              aria-label="Föregående mening"
+              title="Föregående mening (←)"
+              disabled={!isDone && st.n === 1}
+              onClick={() => dispatch({ type: "back" })}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <span className="count">
+              {isDone ? `${total} av ${total} meningar` : `Mening ${st.n} av ${total}`}
+            </span>
+          </div>
         </div>
         <div className="bar">
           <span style={{ width: `${((isDone ? total : st.n - 1) / total) * 100}%` }} />
@@ -318,7 +334,7 @@ export default function App() {
       </section>
 
       <div className="foot">
-        <span className="kbd-hint">Mellanslag = dölj / kontrollera / försök igen · K = klarade</span>
+        <span className="kbd-hint">Mellanslag = dölj / kontrollera / försök igen · K = klarade · ← = tillbaka</span>
         <button
           className="btn small"
           type="button"

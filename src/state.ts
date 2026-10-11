@@ -16,6 +16,7 @@ export type Action =
   | { type: "check" }
   | { type: "yes" }
   | { type: "retry" }
+  | { type: "back" }
   | { type: "again" }
   | { type: "reset" };
 
@@ -65,6 +66,12 @@ export function reducer(st: State, action: Action): State {
     }
     case "retry":
       return { ...st, phase: "show" };
+    case "back":
+      if (st.phase === "done") {
+        const total = SECTIONS[st.sec].sentences.length;
+        return { ...st, n: total, phase: "show", done: st.done.filter((x) => x !== st.sec) };
+      }
+      return st.n > 1 ? { ...st, n: st.n - 1, phase: "show" } : st;
     case "again":
       return go({ ...st, done: st.done.filter((x) => x !== st.sec) }, st.sec);
     case "reset":
