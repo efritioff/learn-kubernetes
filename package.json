@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tts": "node --env-file-if-exists=.env scripts/tts.ts"
   },
   "dependencies": {
     "react": "^19.3.0",
