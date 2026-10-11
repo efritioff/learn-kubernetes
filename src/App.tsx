@@ -292,7 +292,7 @@ export default function App() {
               >
                 {!autoRead ? (
                   <>
-                    Dölj och repetera<kbd>␣</kbd>
+                    Dölj svar<kbd>␣</kbd>
                   </>
                 ) : speech === "blocked" ? (
                   "Dölj utan uppläsning"
@@ -303,7 +303,7 @@ export default function App() {
                 )}
               </button>
               <button type="button" className="btn ok" onClick={() => dispatch({ type: "yes" })}>
-                Jag kan den<kbd>K</kbd>
+                Jag kan<kbd>K</kbd>
               </button>
             </>
           )}
@@ -356,7 +356,7 @@ export default function App() {
             if (window.confirm("Börja om allt? Alla framsteg nollställs.")) dispatch({ type: "reset" });
           }}
         >
-          Börja om allt
+          Återställ
         </button>
       </div>
     </div>
