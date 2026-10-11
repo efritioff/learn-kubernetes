@@ -124,6 +124,8 @@ export default function App() {
         else if (next > -1) dispatch({ type: "go", sec: next });
       } else if (e.key === "ArrowLeft") {
         dispatch({ type: "back" });
+      } else if (e.key === "ArrowRight") {
+        dispatch({ type: "forward" });
       } else if ((e.key === "k" || e.key === "K") && st.phase !== "done") {
         dispatch({ type: "yes" });
       }
@@ -210,6 +212,18 @@ export default function App() {
             <span className="count">
               {isDone ? `${total} av ${total} meningar` : `Mening ${st.n} av ${total}`}
             </span>
+            <button
+              type="button"
+              className="iconbtn"
+              aria-label="Nästa mening"
+              title="Nästa mening (→)"
+              disabled={isDone || st.n >= total}
+              onClick={() => dispatch({ type: "forward" })}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
           </div>
         </div>
         <div className="bar">
@@ -334,7 +348,7 @@ export default function App() {
       </section>
 
       <div className="foot">
-        <span className="kbd-hint">Mellanslag = dölj / kontrollera / försök igen · K = klarade · ← = tillbaka</span>
+        <span className="kbd-hint">Mellanslag = dölj / kontrollera / försök igen · K = klarade · ← → = bläddra</span>
         <button
           className="btn small"
           type="button"

@@ -17,6 +17,7 @@ export type Action =
   | { type: "yes" }
   | { type: "retry" }
   | { type: "back" }
+  | { type: "forward" }
   | { type: "again" }
   | { type: "reset" };
 
@@ -72,6 +73,11 @@ export function reducer(st: State, action: Action): State {
         return { ...st, n: total, phase: "show", done: st.done.filter((x) => x !== st.sec) };
       }
       return st.n > 1 ? { ...st, n: st.n - 1, phase: "show" } : st;
+    case "forward": {
+      const total = SECTIONS[st.sec].sentences.length;
+      if (st.phase === "done" || st.n >= total) return st;
+      return { ...st, n: st.n + 1, phase: "show", started: addUnique(st.started, st.sec) };
+    }
     case "again":
       return go({ ...st, done: st.done.filter((x) => x !== st.sec) }, st.sec);
     case "reset":
