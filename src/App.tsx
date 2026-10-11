@@ -138,7 +138,7 @@ export default function App() {
     <div className="wrap">
       <header>
         <div className="topbar">
-          <span className="eyebrow">Kubernetes · Block 1 · prov onsdag</span>
+          <span className="eyebrow">Kubernetes · Block 1</span>
           <div className="switches">
             {VOICES.length > 1 && (
               <div className="seg" role="radiogroup" aria-label="Röst">
